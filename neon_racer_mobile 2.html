@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#080d19"><title>NEON RACER Mobile</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080d19;color:#efffff;font-family:system-ui;touch-action:none}
+#app{height:100dvh;display:flex;flex-direction:column;align-items:center;padding:env(safe-area-inset-top) 10px env(safe-area-inset-bottom);gap:8px}
+header{width:min(100%,520px);display:flex;justify-content:space-between;font-weight:800;font-size:13px;letter-spacing:1px;padding:5px}header span:last-child{color:#00e5d4}
+#wrap{position:relative;width:min(100%,520px);flex:1;min-height:0;display:flex;justify-content:center}
+canvas{width:100%;height:100%;border:1px solid #1b5960;border-radius:16px;background:#091321}
+#overlay{position:absolute;inset:0;display:grid;place-items:center;padding:18px}.panel{width:min(100%,340px);text-align:center;padding:24px 18px;border:1px solid #00d9cf;border-radius:20px;background:#07101fee;box-shadow:0 0 35px #00d9cf33}
+h1{color:#00e5d4;font-size:clamp(28px,8vw,42px);margin:0 0 10px;letter-spacing:2px}.panel p{color:#c0cfda;font-size:14px;line-height:1.5}
+button{border:0;border-radius:15px;background:#00e5d4;color:#06151b;font-size:18px;font-weight:900;min-height:58px;padding:12px 24px;touch-action:manipulation}
+#controls{width:min(100%,520px);display:flex;gap:14px}.control{flex:1;background:#14243a;color:white;border:1px solid #23707b;font-size:28px;min-height:68px;border-radius:18px}
+.control:active{background:#17606a}.hidden{display:none!important}#hint{font-size:11px;color:#8198aa;padding-bottom:4px}
+</style></head><body><div id="app">
+<header><span>NEON RACER</span><span id="hud">DISTANCE 000000 m</span></header>
+<div id="wrap"><canvas id="game" width="480" height="760"></canvas><div id="overlay"><div class="panel" id="panel"><h1>NEON RACER</h1><p>Esquive les voitures et bats ton record !<br>Utilise les flèches tactiles en bas.</p><button id="start">JOUER</button></div></div></div>
+<div id="controls"><button class="control" id="left">◀</button><button class="control" id="right">▶</button></div>
+<div id="hint">Touchez les flèches pour changer de voie</div></div>
+<script>
+(()=>{const c=document.querySelector('canvas'),x=c.getContext('2d'),hud=document.querySelector('#hud'),ov=document.querySelector('#overlay'),panel=document.querySelector('#panel');
+const W=480,H=760,L=55,R=425,lw=(R-L)/3,py=620;let mode='menu',lane=1,px=240,cars=[],score=0,speed=310,road=0,spawn=0,last=performance.now(),best=0;
+try{best=+(localStorage.neonBest||0)}catch(e){}
+const lx=n=>L+lw*(n+.5),round=(a,b,w,h,r,col)=>{x.fillStyle=col;x.beginPath();x.roundRect(a,b,w,h,r);x.fill()};
+function car(a,b,col,player=false){x.save();x.translate(a,b);round(-22,-39,44,78,10,col);round(-16,-23,32,19,5,'#18283b');round(-16,12,32,15,4,'#18283b');round(-25,-27,7,19,3,'#080c12');round(18,-27,7,19,3,'#080c12');round(-25,10,7,19,3,'#080c12');round(18,10,7,19,3,'#080c12');round(-17,-37,10,5,2,'#fff1a6');round(7,-37,10,5,2,'#fff1a6');if(player){x.strokeStyle='#00fff0';x.lineWidth=3;x.strokeRect(-20,-37,40,74)}x.restore()}
+function draw(){x.fillStyle='#091321';x.fillRect(0,0,W,H);for(let i=0;i<14;i++){let y=(i*78+road*.55)%(H+78)-78;x.strokeStyle='#17323d';x.beginPath();x.arc(25,y+25,13,0,7);x.stroke();x.beginPath();x.arc(455,y+25,13,0,7);x.stroke()}
+x.fillStyle='#272e3d';x.fillRect(L,0,R-L,H);x.fillStyle='#00dfd0';x.fillRect(L-3,0,4,H);x.fillRect(R-1,0,4,H);x.fillStyle='#aebbc9';for(let n=1;n<3;n++)for(let y=-65;y<H+65;y+=105)x.fillRect(L+n*lw-2,(y+road)%105,4,58);
+cars.forEach(t=>car(t.x,t.y,t.col));car(px,py,'#00d9cf',true);round(12,12,164,54,10,'#07101d');x.fillStyle='#8da5b7';x.font='13px system-ui';x.fillText('VITESSE',24,32);x.fillStyle='#00e5d4';x.font='bold 22px system-ui';x.fillText(Math.round(speed*.48)+' km/h',24,56);hud.textContent='DISTANCE '+String(Math.floor(score)).padStart(6,'0')+' m'}
+function show(title,msg,btn){panel.innerHTML='<h1>'+title+'</h1><p>'+msg+'</p><button id="action">'+btn+'</button>';ov.classList.remove('hidden');document.querySelector('#action').onclick=start}
+function start(){lane=1;px=lx(1);cars=[];score=0;speed=310;road=0;spawn=0;mode='play';ov.classList.add('hidden');last=performance.now()}
+function move(d){if(mode==='play')lane=Math.max(0,Math.min(2,lane+d))}
+document.querySelector('#start').onclick=start;document.querySelector('#left').onpointerdown=e=>{e.preventDefault();move(-1)};document.querySelector('#right').onpointerdown=e=>{e.preventDefault();move(1)};
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')move(-1);if(e.key==='ArrowRight'||e.key==='d')move(1);if(e.key==='Escape'&&mode==='play'){mode='pause';show('PAUSE','Appuie sur reprendre pour continuer.','REPRENDRE')}});
+function over(){mode='over';best=Math.max(best,Math.floor(score));try{localStorage.neonBest=best}catch(e){}show('COURSE TERMINÉE','Distance : '+Math.floor(score)+' m<br>Record : '+best+' m','REJOUER')}
+function loop(now){let dt=Math.min((now-last)/1000||0,.035);last=now;if(mode==='play'){speed=Math.min(790,310+score*.2);score+=speed*dt*.035;road+=speed*dt;px+=(lx(lane)-px)*Math.min(1,dt*15);spawn+=dt;if(spawn>Math.max(.43,1.02-score/1500)){spawn=0;let opts=[0,1,2].filter(n=>n!==lane||Math.random()>.65),n=opts[Math.floor(Math.random()*opts.length)];cars.push({x:lx(n),y:-55,col:['#ff5477','#ffb347','#9a83ff','#e9f3ff','#4caeff'][Math.floor(Math.random()*5)]})}cars.forEach(t=>t.y+=(speed+90)*dt);cars=cars.filter(t=>t.y<H+80);for(let t of cars)if(Math.abs(t.x-px)<34&&Math.abs(t.y-py)<58){over();break}}draw();requestAnimationFrame(loop)}requestAnimationFrame(loop)})();
+</script></body></html>
